@@ -11,6 +11,13 @@ test:
 	cd ..; dune exec -- o9cc 1
 	$(CC) $(CFLAGS) ../tmp.s -o a.exe
 	./a.exe ; test $$? = 1
-	cd ..; dune exec -- o9cc -1
+
+	cd ..; dune exec -- o9cc "1+2+3"
 	$(CC) $(CFLAGS) ../tmp.s -o a.exe
-	./a.exe ; test $$? = 255
+	./a.exe ; test $$? = 6
+
+	cd ..; dune exec -- o9cc "10 - 1 - 2"
+	$(CC) $(CFLAGS) ../tmp.s -o a.exe
+	./a.exe ; test $$? = 7
+
+
