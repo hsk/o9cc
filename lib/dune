@@ -2,4 +2,6 @@
 (menhir
  (modules parser))
 (library
+ (preprocess
+  (pps ppx_deriving.show))
  (name o9cc))

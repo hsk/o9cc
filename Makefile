@@ -2,6 +2,7 @@
 
 test:
 	dune clean
+	dune build
 	dune test
 	cd test; bash test.sh
 clean:
