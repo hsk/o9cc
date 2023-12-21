@@ -1,11 +1,7 @@
 open O9cc
 let _ =
-  if Array.length (Sys.argv) != 2 then (
-      Printf.printf("Usage o9cc n\n");
-      exit(1)
-  ) else
   let file = open_out "tmp.s" in
-  let first_val,tokens = match Parser.tokenize Lexer.token (Lexing.from_string (Sys.argv.(1))) with
+  let first_val,tokens = match Parser.tokenize Lexer.token (Lexing.from_channel stdin) with
     | INTEGER first_val::tokens -> first_val,tokens
     | _ -> Printf.eprintf "Tokenize error"; exit 1
   in
