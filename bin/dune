@@ -1,0 +1,4 @@
+(executable
+ (public_name o9cc)
+ (name main)
+ (libraries o9cc))
