@@ -65,7 +65,13 @@ let rec gen_expr node output dc =
 
 let gen_stmt node output dc =
     match node.value with
-    | UniOp(_op, l) -> gen_expr l output dc
+    | UniOp(op, l) ->
+      begin match op.value with
+      | ND_RETURN ->
+          gen_expr l output dc;
+          Printf.fprintf output "  jmp .L.return\n"
+      | ND_EXPR_STMT -> gen_expr l output dc
+      end
     | _ -> failwith "invalid statement"
 
 let codegen program frame output =
@@ -77,7 +83,7 @@ let codegen program frame output =
   (* Prologue *)
   Printf.fprintf output "  push %%rbp\n";      (* ベースポインタを保存 *)
   Printf.fprintf output "  mov %%rsp, %%rbp\n"; (* ベースポインタに関数に入った時のスタックポインタを保存 *)
-  Printf.fprintf output "  sub $%d, %%rsp\n" stack_size; (* 変数の領域確保　26文字×8byte = 208byte *)
+  Printf.fprintf output "  sub $%d, %%rsp\n" stack_size; (* 変数の領域確保 *)
   Printf.fprintf output "\n";
   program |> List.iter (fun node ->
     gen_stmt node output dc;
@@ -85,6 +91,7 @@ let codegen program frame output =
     Printf.fprintf output "\n"
   );
   Printf.fprintf output "\n";
+  Printf.fprintf output ".L.return:\n";
   Printf.fprintf output "  mov %%rbp, %%rsp\n"; (* スタックポインタの復元 *)
   Printf.fprintf output "  pop %%rbp\n";       (* ベースポインタの復元 *)
   Printf.fprintf output "  ret\n"

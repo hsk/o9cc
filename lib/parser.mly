@@ -16,6 +16,7 @@ let id x =
 %token<string> ID
 %token EOF LPAREN "(" RPAREN ")" COMMA "," SEMI ";" EQ "="
 %token STAR "*" PLUS "+" MINUS "-" DIV "/" LT "<" GT ">" LE "<=" GE ">=" EQEQ "==" NE "!="
+%token RETURN
 %type<frame * program> translation_unit
 %start translation_unit
 %%
@@ -27,9 +28,9 @@ program:
 | stmt program                            { $1::$2 }
 stmt:
 | expr_stmt                               { $1 }
-
+| RETURN expr ";"                         { a@@UniOp(a@@ND_RETURN,$2) }
 expr_stmt:
-| expr ";"                                { a@@UniOp(a@@ND_EXPR_STMT,$1)}
+| expr ";"                                { a@@UniOp(a@@ND_EXPR_STMT,$1) }
 primary_expr:
 | INTEGER                                 { a@@Num $1 }
 | ID                                      { id $1 }

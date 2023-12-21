@@ -20,7 +20,7 @@ type binOpKind =
 type binOp = binOpKind annot
 [@@deriving show]
 
-type uniOpKind = ND_EXPR_STMT
+type uniOpKind = ND_EXPR_STMT | ND_RETURN
 [@@deriving show]
 
 type uniOp = uniOpKind annot
@@ -81,6 +81,7 @@ let rec write_node file cnt node =
       let left_node_name = node_name cnt in
       let op_str = match op.value with
           | ND_EXPR_STMT -> "\"EXPR_STMT\""
+          | ND_RETURN -> "\"RETURN\""
       in
       Printf.fprintf file "%s[label=%s]" self_node_name op_str;
       Printf.fprintf file "%s -> %s" self_node_name left_node_name;
