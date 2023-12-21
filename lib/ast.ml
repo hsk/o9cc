@@ -10,6 +10,11 @@ type binOpKind =
   | Sub
   | Mult
   | Div
+  | Eq    (* == *)
+  | Ne    (* != *)
+  | Lt    (* <  *)
+  | Le    (* <= *)
+
 [@@derive show]
 
 type binOp = binOpKind annot
@@ -37,10 +42,14 @@ let rec write_node node file cnt =
     let cnt = write_node r file (cnt + 1) in
     let right_node_name = node_name cnt in
     let op_str = match op.value with
-      | Add -> "\"+\""
-      | Sub -> "\"-\""
+      | Add  -> "\"+\""
+      | Sub  -> "\"-\""
       | Mult -> "\"*\""
-      | Div -> "\"/\""
+      | Div  -> "\"/\""
+      | Eq   -> "\"==\""
+      | Ne   -> "\"!=\""
+      | Lt   -> "\"<\""
+      | Le   -> "\"<=\""
     in
     Printf.fprintf file "%s[label=%s]\n" self_node_name op_str;
     Printf.fprintf file "%s -> %s\n" self_node_name left_node_name;
