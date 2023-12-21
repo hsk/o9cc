@@ -1,4 +1,3 @@
-(ocamllex lexer)
 (executable
  (public_name o9cc)
  (name main)

@@ -1,2 +1,3 @@
 (test
- (name o9cc))
+ (name o9cc)
+ (libraries o9cc))

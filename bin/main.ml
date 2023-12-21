@@ -1,3 +1,4 @@
+open O9cc
 let _ =
   if Array.length (Sys.argv) != 2 then (
       Printf.printf("Usage o9cc n\n");
