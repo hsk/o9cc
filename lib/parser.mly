@@ -1,17 +1,26 @@
 %{
 open Ast
 let a v =
-    {value = v; loc = (0, 0)}
+  {value = v; loc = (0, 0)}
+let frame = ref []
+let find_lvar name frame =
+  List.assoc name frame
+let id x =
+    if List.mem_assoc x !frame then a@@LocalVar(x,find_lvar x !frame) else
+    let offset = ((List.length !frame) + 1) * 8 in
+    frame := !frame @ [(x,offset)];
+    a@@LocalVar(x,offset)
+
 %}
 %token<int> INTEGER
 %token<string> ID
-%token EOF LPAREN "(" RPAREN ")" SEMI ";" EQ "="
+%token EOF LPAREN "(" RPAREN ")" COMMA "," SEMI ";" EQ "="
 %token STAR "*" PLUS "+" MINUS "-" DIV "/" LT "<" GT ">" LE "<=" GE ">=" EQEQ "==" NE "!="
-%type<program> translation_unit
+%type<frame * program> translation_unit
 %start translation_unit
 %%
 translation_unit:
-| program EOF                             { $1 }
+| program EOF                             { !frame, $1 }
 
 program:
 | stmt                                    { [$1] }
@@ -23,7 +32,7 @@ expr_stmt:
 | expr ";"                                { a@@UniOp(a@@ND_EXPR_STMT,$1)}
 primary_expr:
 | INTEGER                                 { a@@Num $1 }
-| ID                                      { a@@LocalVar($1,0)}
+| ID                                      { id $1 }
 | "(" expr ")"                            { $2 }
 
 unary_expr:

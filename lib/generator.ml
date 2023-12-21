@@ -1,7 +1,7 @@
 
 open Ast
 
-module Depth_cnt = struct
+module DepthCnt = struct
   let add d depth =
     depth := !depth + d
   let sub d depth =
@@ -10,20 +10,18 @@ end
 
 let gen_addr node output =
     match node.value with
-    | LocalVar(s,_) ->
-      let c = int_of_char (String.get s 0) in
-      let offset = ((c - int_of_char 'a') + 1) * 8 in
+    | LocalVar(_, offset) ->
       Printf.fprintf output "  lea %d(%%rbp), %%rax\n" (-offset)
     | _ ->
       failwith (Printf.sprintf "GEN: not an lvalue %s." (Ast.show_ast node))
 
 let push output dc =
     Printf.fprintf output "  push %%rax\n";
-    Depth_cnt.add 1 dc
+    DepthCnt.add 1 dc
 
 let pop s output dc =
     Printf.fprintf output "  pop %s\n" s;
-    Depth_cnt.sub 1 dc
+    DepthCnt.sub 1 dc
 
 let rec gen_expr node output dc =
   match node.value with
@@ -70,15 +68,16 @@ let gen_stmt node output dc =
     | UniOp(_op, l) -> gen_expr l output dc
     | _ -> failwith "invalid statement"
 
-let codegen program output =
-  let dc = ref 0 in  
+let codegen program frame output =
+  let dc = ref 0 in
+  let stack_size = (List.length frame) * 8 in
   (* Printf.fprintf output ".intel_syntax noprefix\n"; *)
   Printf.fprintf output ".globl _main\n";
   Printf.fprintf output "_main:\n";
   (* Prologue *)
   Printf.fprintf output "  push %%rbp\n";      (* ベースポインタを保存 *)
   Printf.fprintf output "  mov %%rsp, %%rbp\n"; (* ベースポインタに関数に入った時のスタックポインタを保存 *)
-  Printf.fprintf output "  sub $208, %%rsp\n"; (* 変数の領域確保　26文字×8byte = 208byte *)
+  Printf.fprintf output "  sub $%d, %%rsp\n" stack_size; (* 変数の領域確保　26文字×8byte = 208byte *)
   Printf.fprintf output "\n";
   program |> List.iter (fun node ->
     gen_stmt node output dc;

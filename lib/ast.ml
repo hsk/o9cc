@@ -38,6 +38,12 @@ and ast = astKind annot
 type program = ast list
 [@@deriving show]
 
+type localVariable = string * int
+[@@deriving show]
+
+type frame = localVariable list
+[@@deriving show]
+
 let node_name cnt =
   Printf.sprintf "node%d" cnt
 
