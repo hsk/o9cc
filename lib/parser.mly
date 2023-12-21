@@ -16,10 +16,15 @@ primary_expr:
 | INTEGER                                 { a@@Num $1 }
 | "(" additive_expr ")"                   { $2 }
 
-multiplicative_expr:
+unnary_expr:
+| "+" primary_expr                        { $2 }
+| "-" primary_expr                        { a@@BinOp(a@@Sub,a@@Num 0,$2) }
 | primary_expr                            { $1 }
-| multiplicative_expr "*" primary_expr    { a@@BinOp(a@@Mult,$1,$3) }
-| multiplicative_expr "/" primary_expr    { a@@BinOp(a@@Div,$1,$3) }
+
+multiplicative_expr:
+| unnary_expr                             { $1 }
+| multiplicative_expr "*" unnary_expr     { a@@BinOp(a@@Mult,$1,$3) }
+| multiplicative_expr "/" unnary_expr     { a@@BinOp(a@@Div,$1,$3) }
 
 additive_expr:
 | multiplicative_expr                     { $1 }

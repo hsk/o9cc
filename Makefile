@@ -7,4 +7,5 @@ test:
 clean:
 	dune clean
 	rm -rf tmp* test/a.exe test/tmp* _build
-
+dot:
+	dot -T png test/tmp.dot -o tmp.png
