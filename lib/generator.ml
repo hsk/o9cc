@@ -63,7 +63,7 @@ let rec gen_expr node output dc =
     end
   | _ -> failwith "error"
 
-let gen_stmt node output dc =
+let rec gen_stmt node output dc =
     match node.value with
     | UniOp(op, l) ->
       begin match op.value with
@@ -72,6 +72,10 @@ let gen_stmt node output dc =
           Printf.fprintf output "  jmp .L.return\n"
       | ND_EXPR_STMT -> gen_expr l output dc
       end
+    | Block(body) ->
+      body |> List.iter (fun node ->
+        gen_stmt node output dc
+      )
     | _ -> failwith "invalid statement"
 
 let codegen program frame output =

@@ -31,6 +31,7 @@ type astKind =
   | LocalVar of string * int
   | BinOp of binOp * ast * ast
   | UniOp of uniOp * ast
+  | Block of ast list
 [@@deriving show]
 and ast = astKind annot
 [@@deriving show]
@@ -77,15 +78,22 @@ let rec write_node file cnt node =
     Printf.fprintf file "%s[label=\"%s\n%d\"]" self_node_name name offset;
     cnt
   | UniOp(op, l) ->
-      let cnt = write_node file (cnt + 1) l in
-      let left_node_name = node_name cnt in
-      let op_str = match op.value with
-          | ND_EXPR_STMT -> "\"EXPR_STMT\""
-          | ND_RETURN -> "\"RETURN\""
-      in
-      Printf.fprintf file "%s[label=%s]" self_node_name op_str;
-      Printf.fprintf file "%s -> %s" self_node_name left_node_name;
-      cnt
+    let cnt = write_node file (cnt + 1) l in
+    let left_node_name = node_name cnt in
+    let op_str = match op.value with
+        | ND_EXPR_STMT -> "\"EXPR_STMT\""
+        | ND_RETURN -> "\"RETURN\""
+    in
+    Printf.fprintf file "%s[label=%s]" self_node_name op_str;
+    Printf.fprintf file "%s -> %s" self_node_name left_node_name;
+    cnt
+  | Block(body) ->
+    Printf.printf "%s[label=BLOCK]" self_node_name;
+    List.fold_left (fun cnt node ->
+      let next_node_name = node_name(cnt+1) in
+      Printf.fprintf file "%s -> %s\n" self_node_name next_node_name;
+      write_node file (cnt+1) node
+    ) cnt body
 
 let write_dot program path =
   let file = open_out path in

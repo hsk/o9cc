@@ -14,23 +14,30 @@ let id x =
 %}
 %token<int> INTEGER
 %token<string> ID
-%token EOF LPAREN "(" RPAREN ")" COMMA "," SEMI ";" EQ "="
+%token EOF LPAREN "(" RPAREN ")" LBRACE "{" RBRACE "}" COMMA "," SEMI ";" EQ "="
 %token STAR "*" PLUS "+" MINUS "-" DIV "/" LT "<" GT ">" LE "<=" GE ">=" EQEQ "==" NE "!="
 %token RETURN
 %type<frame * program> translation_unit
 %start translation_unit
 %%
 translation_unit:
-| program EOF                             { !frame, $1 }
+| stmt_list EOF                           { !frame, $1 }
 
-program:
+stmt_list:
 | stmt                                    { [$1] }
-| stmt program                            { $1::$2 }
+| stmt stmt_list                          { $1::$2 }
+
 stmt:
 | expr_stmt                               { $1 }
 | RETURN expr ";"                         { a@@UniOp(a@@ND_RETURN,$2) }
+| compound_stmt                           { $1 }
+| ";"                                     { a@@Block([]) }
 expr_stmt:
 | expr ";"                                { a@@UniOp(a@@ND_EXPR_STMT,$1) }
+
+compound_stmt:
+| "{" stmt_list "}"                       { a@@Block($2) }
+
 primary_expr:
 | INTEGER                                 { a@@Num $1 }
 | ID                                      { id $1 }

@@ -13,6 +13,8 @@ rule token = parse
   | "/"   { DIV }
   | "("   { LPAREN }
   | ")"   { RPAREN }
+  | "{"   { LBRACE }
+  | "}"   { RBRACE }
   | "<"   { LT }
   | ">"   { GT }
   | "<="  { LE }
