@@ -1,11 +1,17 @@
 
 open Ast
 
-module DepthCnt = struct
-  let add d depth =
-    depth := !depth + d
-  let sub d depth =
-    depth := !depth - d
+module GenCnt = struct
+  let depth_add d dc =
+    let (depth,label) = !dc in
+    dc := (depth + d, label)
+  let depth_sub d dc =
+    let (depth,label) = !dc in
+    dc := (depth - d, label)
+  let label_up dc =
+    let (depth,label) = !dc in
+    dc := (depth, label + 1);
+    label
 end
 
 let gen_addr node output =
@@ -17,11 +23,11 @@ let gen_addr node output =
 
 let push output dc =
     Printf.fprintf output "  push %%rax\n";
-    DepthCnt.add 1 dc
+    GenCnt.depth_add 1 dc
 
 let pop s output dc =
     Printf.fprintf output "  pop %s\n" s;
-    DepthCnt.sub 1 dc
+    GenCnt.depth_sub 1 dc
 
 let rec gen_expr node output dc =
   match node.value with
@@ -67,19 +73,29 @@ let rec gen_stmt node output dc =
     match node.value with
     | UniOp(op, l) ->
       begin match op.value with
-      | ND_RETURN ->
+      | NdReturn ->
           gen_expr l output dc;
           Printf.fprintf output "  jmp .L.return\n"
-      | ND_EXPR_STMT -> gen_expr l output dc
+      | NdExprStmt -> gen_expr l output dc
       end
     | Block(body) ->
       body |> List.iter (fun node ->
         gen_stmt node output dc
       )
+    | If(cond, thn, els) ->
+        let c = GenCnt.label_up dc in
+        gen_expr cond output dc;
+        Printf.fprintf output "  cmp $0, %%rax\n";
+        Printf.fprintf output "  je  .L.else.%d\n" c;
+        gen_stmt thn output dc;
+        Printf.fprintf output "  jmp .L.end.%d\n" c;
+        Printf.fprintf output ".L.else.%d:\n" c;
+        gen_stmt els output dc;
+        Printf.fprintf output ".L.end.%d:\n" c;
     | _ -> failwith "invalid statement"
 
 let codegen program frame output =
-  let dc = ref 0 in
+  let dc = ref (0,0) in
   let stack_size = (List.length frame) * 8 in
   (* Printf.fprintf output ".intel_syntax noprefix\n"; *)
   Printf.fprintf output ".globl _main\n";
@@ -91,7 +107,7 @@ let codegen program frame output =
   Printf.fprintf output "\n";
   program |> List.iter (fun node ->
     gen_stmt node output dc;
-    assert(!dc = 0);
+    assert(fst !dc = 0);
     Printf.fprintf output "\n"
   );
   Printf.fprintf output "\n";

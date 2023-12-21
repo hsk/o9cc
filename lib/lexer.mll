@@ -1,6 +1,10 @@
 {
 open Parser
-let keywords = ["return",RETURN]
+let keywords = [
+  "return",RETURN;
+  "if",IF;
+  "else",ELSE
+]
 }
 let space = [' ' '\t' '\r']
 let ident = ['a'-'z'] ['0'-'9' 'a'-'z']*
@@ -23,7 +27,6 @@ rule token = parse
   | "!="  { NE }
   | ";"   { SEMI }
   | "="   { EQ }
-  | ","   { COMMA }
   | ident as n { try List.assoc n keywords
                  with _ -> ID n }
   | eof   { EOF }

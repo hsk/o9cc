@@ -20,7 +20,7 @@ type binOpKind =
 type binOp = binOpKind annot
 [@@deriving show]
 
-type uniOpKind = ND_EXPR_STMT | ND_RETURN
+type uniOpKind = NdExprStmt | NdReturn
 [@@deriving show]
 
 type uniOp = uniOpKind annot
@@ -32,6 +32,7 @@ type astKind =
   | BinOp of binOp * ast * ast
   | UniOp of uniOp * ast
   | Block of ast list
+  | If of ast * ast * ast
 [@@deriving show]
 and ast = astKind annot
 [@@deriving show]
@@ -50,16 +51,21 @@ let node_name cnt =
 
 let rec write_node file cnt node =
   let self_node_name = node_name cnt in
+  let inc_write_node file cnt node =
+    let cnt = cnt + 1 in
+    let name = node_name cnt in
+    Printf.fprintf file "%s -> %s\n" self_node_name name;
+    write_node file cnt node
+  in
+  let write_label label =
+    Printf.fprintf file "%s[label=%s]\n" self_node_name label
+  in
   match node.value with
   | Num(n) ->
-    Printf.fprintf file "%s[label=%d]\n" self_node_name n;
+    write_label (string_of_int n);
     cnt
   | BinOp(op, l, r) ->
-    let cnt = write_node file (cnt + 1) l in
-    let left_node_name = node_name cnt in
-    let cnt = write_node file (cnt + 1) r in
-    let right_node_name = node_name cnt in
-    let op_str = match op.value with
+    let label = match op.value with
       | Add    -> "\"+\""
       | Sub    -> "\"-\""
       | Mult   -> "\"*\""
@@ -70,30 +76,28 @@ let rec write_node file cnt node =
       | Le     -> "\"<=\""
       | Assign -> "\"=\""
     in
-    Printf.fprintf file "%s[label=%s]\n" self_node_name op_str;
-    Printf.fprintf file "%s -> %s\n" self_node_name left_node_name;
-    Printf.fprintf file "%s -> %s\n" self_node_name right_node_name;
+    write_label label;
+    let cnt = inc_write_node file cnt l in
+    let cnt = inc_write_node file cnt r in
     cnt
   | LocalVar(name, offset) ->
-    Printf.fprintf file "%s[label=\"%s\n%d\"]" self_node_name name offset;
+    write_label (Printf.sprintf "\"%s\n%d\"" name offset);
     cnt
   | UniOp(op, l) ->
-    let cnt = write_node file (cnt + 1) l in
-    let left_node_name = node_name cnt in
-    let op_str = match op.value with
-        | ND_EXPR_STMT -> "\"EXPR_STMT\""
-        | ND_RETURN -> "\"RETURN\""
-    in
-    Printf.fprintf file "%s[label=%s]" self_node_name op_str;
-    Printf.fprintf file "%s -> %s" self_node_name left_node_name;
-    cnt
+    (match op.value with
+    | NdExprStmt -> write_label "\"EXPR_STMT\""
+    | NdReturn -> write_label "\"RETURN\""
+    );
+    inc_write_node file cnt l
   | Block(body) ->
-    Printf.printf "%s[label=BLOCK]" self_node_name;
-    List.fold_left (fun cnt node ->
-      let next_node_name = node_name(cnt+1) in
-      Printf.fprintf file "%s -> %s\n" self_node_name next_node_name;
-      write_node file (cnt+1) node
-    ) cnt body
+    write_label "BLOCK";
+    List.fold_left (inc_write_node file) cnt body
+  | If(cond, thn, els) ->
+    write_label "IF";
+    let cnt = inc_write_node file cnt cond in
+    let cnt = inc_write_node file cnt thn in
+    let cnt = inc_write_node file cnt els in
+    cnt
 
 let write_dot program path =
   let file = open_out path in

@@ -14,9 +14,13 @@ let id x =
 %}
 %token<int> INTEGER
 %token<string> ID
-%token EOF LPAREN "(" RPAREN ")" LBRACE "{" RBRACE "}" COMMA "," SEMI ";" EQ "="
+%token EOF LPAREN "(" RPAREN ")" LBRACE "{" RBRACE "}" SEMI ";" EQ "="
 %token STAR "*" PLUS "+" MINUS "-" DIV "/" LT "<" GT ">" LE "<=" GE ">=" EQEQ "==" NE "!="
-%token RETURN
+%token RETURN "return" IF "if" ELSE "else"
+
+%nonassoc NO_ELSE
+%nonassoc ELSE 
+
 %type<frame * program> translation_unit
 %start translation_unit
 %%
@@ -29,14 +33,20 @@ stmt_list:
 
 stmt:
 | expr_stmt                               { $1 }
-| RETURN expr ";"                         { a@@UniOp(a@@ND_RETURN,$2) }
+| "return" expr ";"                       { a@@UniOp(a@@NdReturn,$2) }
 | compound_stmt                           { $1 }
+| if_stmt                                 { $1 }
 | ";"                                     { a@@Block([]) }
+
 expr_stmt:
-| expr ";"                                { a@@UniOp(a@@ND_EXPR_STMT,$1) }
+| expr ";"                                { a@@UniOp(a@@NdExprStmt,$1) }
 
 compound_stmt:
 | "{" stmt_list "}"                       { a@@Block($2) }
+
+if_stmt:
+| "if" "(" expr ")" stmt %prec NO_ELSE    { a@@If($3,$5,a@@Block([])) }
+| "if" "(" expr ")" stmt "else" stmt      { a@@If($3,$5,$7) }
 
 primary_expr:
 | INTEGER                                 { a@@Num $1 }
