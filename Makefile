@@ -3,8 +3,8 @@
 test:
 	dune clean
 	dune test
-	cd test; make
+	cd test; bash test.sh
 clean:
 	dune clean
-	rm -rf tmp.s test/a.exe _build
+	rm -rf tmp* test/a.exe test/tmp* _build
 
