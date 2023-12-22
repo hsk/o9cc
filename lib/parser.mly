@@ -10,13 +10,15 @@ let id x =
     let offset = ((List.length !frame) + 1) * 8 in
     frame := !frame @ [(x,offset)];
     a@@LocalVar(x,offset)
-
+let opt = function
+    | Some a -> a
+    | None -> a@@Block([])
 %}
 %token<int> INTEGER
 %token<string> ID
 %token EOF LPAREN "(" RPAREN ")" LBRACE "{" RBRACE "}" SEMI ";" EQ "="
 %token STAR "*" PLUS "+" MINUS "-" DIV "/" LT "<" GT ">" LE "<=" GE ">=" EQEQ "==" NE "!="
-%token RETURN "return" IF "if" ELSE "else"
+%token RETURN "return" IF "if" ELSE "else" FOR "for"
 
 %nonassoc NO_ELSE
 %nonassoc ELSE 
@@ -36,6 +38,7 @@ stmt:
 | "return" expr ";"                       { a@@UniOp(a@@NdReturn,$2) }
 | compound_stmt                           { $1 }
 | if_stmt                                 { $1 }
+| iteration_stmt                          { $1 }
 | ";"                                     { a@@Block([]) }
 
 expr_stmt:
@@ -47,6 +50,10 @@ compound_stmt:
 if_stmt:
 | "if" "(" expr ")" stmt %prec NO_ELSE    { a@@If($3,$5,a@@Block([])) }
 | "if" "(" expr ")" stmt "else" stmt      { a@@If($3,$5,$7) }
+
+iteration_stmt:
+| FOR "(" expr? ";" expr? ";" expr? ")" stmt
+                                          { a@@For(opt $3,opt $5,opt $7,$9) }
 
 primary_expr:
 | INTEGER                                 { a@@Num $1 }

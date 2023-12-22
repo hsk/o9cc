@@ -33,6 +33,7 @@ type astKind =
   | UniOp of uniOp * ast
   | Block of ast list
   | If of ast * ast * ast
+  | For of ast * ast * ast * ast
 [@@deriving show]
 and ast = astKind annot
 [@@deriving show]
@@ -97,6 +98,13 @@ let rec write_node file cnt node =
     let cnt = inc_write_node file cnt cond in
     let cnt = inc_write_node file cnt thn in
     let cnt = inc_write_node file cnt els in
+    cnt
+  | For(init, cond, inc, body) ->
+    write_label "FOR";
+    let cnt = inc_write_node file cnt init in
+    let cnt = inc_write_node file cnt cond in
+    let cnt = inc_write_node file cnt inc in
+    let cnt = inc_write_node file cnt body in
     cnt
 
 let write_dot program path =

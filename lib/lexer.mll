@@ -3,7 +3,8 @@ open Parser
 let keywords = [
   "return",RETURN;
   "if",IF;
-  "else",ELSE
+  "else",ELSE;
+  "for",FOR;
 ]
 }
 let space = [' ' '\t' '\r']

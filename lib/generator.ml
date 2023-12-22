@@ -69,6 +69,10 @@ let rec gen_expr node output dc =
     end
   | _ -> failwith "error"
 
+let is_empty_block a =
+  match a.value with
+  | Block([]) -> true
+  | _ -> false
 let rec gen_stmt node output dc =
     match node.value with
     | UniOp(op, l) ->
@@ -83,15 +87,31 @@ let rec gen_stmt node output dc =
         gen_stmt node output dc
       )
     | If(cond, thn, els) ->
-        let c = GenCnt.label_up dc in
-        gen_expr cond output dc;
-        Printf.fprintf output "  cmp $0, %%rax\n";
-        Printf.fprintf output "  je  .L.else.%d\n" c;
-        gen_stmt thn output dc;
-        Printf.fprintf output "  jmp .L.end.%d\n" c;
-        Printf.fprintf output ".L.else.%d:\n" c;
-        gen_stmt els output dc;
-        Printf.fprintf output ".L.end.%d:\n" c;
+      let c = GenCnt.label_up dc in
+      gen_expr cond output dc;
+      Printf.fprintf output "  cmp $0, %%rax\n";
+      Printf.fprintf output "  je  .L.else.%d\n" c;
+      gen_stmt thn output dc;
+      Printf.fprintf output "  jmp .L.end.%d\n" c;
+      Printf.fprintf output ".L.else.%d:\n" c;
+      gen_stmt els output dc;
+      Printf.fprintf output ".L.end.%d:\n" c;
+    | For(init,cond,inc,body) ->
+      let c = GenCnt.label_up dc in
+      if not (is_empty_block init) then (
+        gen_expr init output dc;
+      );
+      Printf.fprintf output ".L.begin.%d:\n" c;
+      if not (is_empty_block cond) then (
+          gen_expr cond output dc;
+          Printf.fprintf output "  cmp $0, %%rax\n";
+          Printf.fprintf output "  je  .L.end.%d\n" c;
+      );
+      gen_stmt body output dc;
+      if not (is_empty_block inc) then 
+          gen_expr inc output dc;
+      Printf.fprintf output "  jmp .L.begin.%d\n" c;
+      Printf.fprintf output ".L.end.%d:\n" c;
     | _ -> failwith "invalid statement"
 
 let codegen program frame output =
