@@ -18,7 +18,7 @@ let opt = function
 %token<string> ID
 %token EOF LPAREN "(" RPAREN ")" LBRACE "{" RBRACE "}" SEMI ";" EQ "="
 %token STAR "*" PLUS "+" MINUS "-" DIV "/" LT "<" GT ">" LE "<=" GE ">=" EQEQ "==" NE "!="
-%token RETURN "return" IF "if" ELSE "else" FOR "for"
+%token RETURN "return" IF "if" ELSE "else" FOR "for" WHILE "while"
 
 %nonassoc NO_ELSE
 %nonassoc ELSE 
@@ -52,8 +52,9 @@ if_stmt:
 | "if" "(" expr ")" stmt "else" stmt      { a@@If($3,$5,$7) }
 
 iteration_stmt:
-| FOR "(" expr? ";" expr? ";" expr? ")" stmt
+| "for" "(" expr? ";" expr? ";" expr? ")" stmt
                                           { a@@For(opt $3,opt $5,opt $7,$9) }
+| "while" "(" expr ")" stmt               { a@@For(opt None,$3,opt None,$5) }
 
 primary_expr:
 | INTEGER                                 { a@@Num $1 }

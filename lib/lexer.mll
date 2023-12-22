@@ -5,6 +5,7 @@ let keywords = [
   "if",IF;
   "else",ELSE;
   "for",FOR;
+  "while",WHILE;
 ]
 }
 let space = [' ' '\t' '\r']
