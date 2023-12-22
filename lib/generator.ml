@@ -14,13 +14,6 @@ module GenCnt = struct
     label
 end
 
-let gen_addr node output =
-    match node.value with
-    | LocalVar(_, offset) ->
-      Printf.fprintf output "  lea %d(%%rbp), %%rax\n" (-offset)
-    | _ ->
-      failwith (Printf.sprintf "GEN: not an lvalue %s." (Ast.show_ast node))
-
 let push output dc =
     Printf.fprintf output "  push %%rax\n";
     GenCnt.depth_add 1 dc
@@ -34,10 +27,10 @@ let rec gen_expr node output dc =
   | Num(n) ->
     Printf.fprintf output "  mov $%d, %%rax\n" n
   | LocalVar(_s,_) ->
-      gen_addr node output;
+      gen_addr node output dc;
       Printf.fprintf output "  mov (%%rax), %%rax\n"
   | BinOp({value=Assign; _}, l, r) ->
-    gen_addr l output;
+    gen_addr l output dc;
     push output dc;
     gen_expr r output dc;
     pop "%rdi" output dc;
@@ -67,7 +60,21 @@ let rec gen_expr node output dc =
               Printf.fprintf output "  movzx %%al, %%rax\n"
     | _ -> failwith "error"
     end
-  | _ -> failwith "error"
+  | UniOp({value=Deref; _}, l) ->
+    Printf.fprintf output "# deref\n";
+    gen_expr l output dc;
+    Printf.fprintf output "  mov (%%rax), %%rax\n"
+  | UniOp({value=Addr; _}, l) ->
+    Printf.fprintf output "# addr\n";
+    gen_addr l output dc
+  | _ -> failwith "GEN: Invalid expression."
+and gen_addr node output dc =
+  match node.value with
+  | LocalVar(_, offset) ->
+    Printf.fprintf output "  lea %d(%%rbp), %%rax\n" offset
+  | UniOp({value=Deref; _}, l) -> gen_expr l output dc
+  | _ ->
+    failwith (Printf.sprintf "GEN: not an lvalue %s." (Ast.show_ast node))
 
 let is_empty_block a =
   match a.value with
@@ -81,6 +88,7 @@ let rec gen_stmt node output dc =
           gen_expr l output dc;
           Printf.fprintf output "  jmp .L.return\n"
       | NdExprStmt -> gen_expr l output dc
+      | _ -> failwith "invalid statement"
       end
     | Block(body) ->
       body |> List.iter (fun node ->

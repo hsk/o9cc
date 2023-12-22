@@ -7,7 +7,7 @@ let find_lvar name frame =
   List.assoc name frame
 let id x =
     if List.mem_assoc x !frame then a@@LocalVar(x,find_lvar x !frame) else
-    let offset = ((List.length !frame) + 1) * 8 in
+    let offset = -((List.length !frame) + 1) * 8 in
     frame := !frame @ [(x,offset)];
     a@@LocalVar(x,offset)
 let opt = function
@@ -16,7 +16,7 @@ let opt = function
 %}
 %token<int> INTEGER
 %token<string> ID
-%token EOF LPAREN "(" RPAREN ")" LBRACE "{" RBRACE "}" SEMI ";" EQ "="
+%token EOF LPAREN "(" RPAREN ")" LBRACE "{" RBRACE "}" SEMI ";" EQ "=" AND "&"
 %token STAR "*" PLUS "+" MINUS "-" DIV "/" LT "<" GT ">" LE "<=" GE ">=" EQEQ "==" NE "!="
 %token RETURN "return" IF "if" ELSE "else" FOR "for" WHILE "while"
 
@@ -64,6 +64,8 @@ primary_expr:
 unary_expr:
 | "+" primary_expr                        { $2 }
 | "-" primary_expr                        { a@@BinOp(a@@Sub,a@@Num 0,$2) }
+| "*" unary_expr                          { a@@UniOp(a@@Deref, $2) }
+| "&" unary_expr                          { a@@UniOp(a@@Addr, $2) }
 | primary_expr                            { $1 }
 
 multiplicative_expr:

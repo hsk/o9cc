@@ -29,6 +29,7 @@ rule token = parse
   | "!="  { NE }
   | ";"   { SEMI }
   | "="   { EQ }
+  | "&"   { AND }
   | ident as n { try List.assoc n keywords
                  with _ -> ID n }
   | eof   { EOF }

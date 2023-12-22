@@ -20,7 +20,7 @@ type binOpKind =
 type binOp = binOpKind annot
 [@@deriving show]
 
-type uniOpKind = NdExprStmt | NdReturn
+type uniOpKind = NdExprStmt | NdReturn | Addr | Deref
 [@@deriving show]
 
 type uniOp = uniOpKind annot
@@ -88,6 +88,8 @@ let rec write_node file cnt node =
     (match op.value with
     | NdExprStmt -> write_label "\"EXPR_STMT\""
     | NdReturn -> write_label "\"RETURN\""
+    | Addr -> write_label "\"&\""
+    | Deref -> write_label "\"*p\""
     );
     inc_write_node file cnt l
   | Block(body) ->
